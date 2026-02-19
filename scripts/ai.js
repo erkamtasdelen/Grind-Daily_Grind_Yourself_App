@@ -166,10 +166,18 @@ async function loadChatHistory() {
     try {
         const result = await apiGet("get_chat_history&limit=10");
         if (result.success && result.data) {
-            chatHistory = result.data.map(msg => ({
+            // Map and validate chat history
+            let history = result.data.map(msg => ({
                 role: msg.role === 'ai' ? 'model' : 'user',
                 content: msg.message
             }));
+            
+            // Ensure first message is from user (Gemini requirement)
+            while (history.length > 0 && history[0].role === 'model') {
+                history.shift(); // Remove first model message
+            }
+            
+            chatHistory = history;
             
             // Render previous messages in UI
             result.data.forEach(msg => {
@@ -746,10 +754,16 @@ async function getAIResponse(userMessage) {
             systemInstruction: getSystemPrompt()
         });
 
-        const history = chatHistory.map(msg => ({
+        // Prepare and validate history for Gemini
+        let history = chatHistory.map(msg => ({
             role: msg.role,
             parts: [{ text: msg.content }]
         }));
+        
+        // Ensure first message is from user (Gemini requirement)
+        while (history.length > 0 && history[0].role === 'model') {
+            history.shift();
+        }
 
         const chat = model.startChat({
             history: history,
@@ -776,6 +790,10 @@ async function getAIResponse(userMessage) {
         // Keep only last 10 messages in memory
         if (chatHistory.length > 10) {
             chatHistory = chatHistory.slice(-10);
+            // Ensure first message is still from user after trimming
+            while (chatHistory.length > 0 && chatHistory[0].role === 'model') {
+                chatHistory.shift();
+            }
         }
 
         return responseText;
