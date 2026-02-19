@@ -5,16 +5,12 @@ console.log("AI.js loaded successfully");
 
 // API Configuration
 const API_KEY = "AIzaSyAa6TNiz1E-5rsQr7bSdnju3vR86fWmoe0";
-const API_BASE = (function() {
-    try {
-        const loc = globalThis.location || window.location;
-        return loc.origin + loc.pathname.replace(/[^\/]*$/, '');
-    } catch(e) {
-        return './';
-    }
-})();
-const API_URL = API_BASE + "phps/api.php";
 
+// Use simple relative path for better mobile compatibility
+const API_URL = "phps/api.php";
+const DB_SETUP_URL = "phps/setup_db.php";
+
+console.log("Current location:", globalThis.location?.href);
 console.log("API_URL:", API_URL);
 
 let genAI;
@@ -133,6 +129,28 @@ async function init() {
         console.log("Event listeners ok");
         updateDate();
         console.log("Date ok");
+        
+        // Test API connection first
+        console.log("Testing API connection...");
+        const testResult = await apiGet("get_stats");
+        console.log("API test result:", testResult);
+        
+        if (!testResult.success && testResult.error) {
+            // Show connection error to user
+            if (chatContainer) {
+                chatContainer.innerHTML = `
+                    <div class="message ai">
+                        <div class="message-bubble" style="background:#ff4444;color:white;">
+                            <b>Bağlantı Hatası:</b><br>
+                            ${testResult.error}<br><br>
+                            <small>API URL: ${API_URL}</small><br>
+                            <small>Location: ${globalThis.location?.href || 'unknown'}</small>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
         await setupDatabase();
         console.log("DB setup ok");
         await loadChatHistory();
@@ -148,16 +166,18 @@ async function init() {
         console.error("Init error:", e);
         // Show error to user
         if (chatContainer) {
-            chatContainer.innerHTML = '<div class="message ai"><div class="message-bubble">Uygulama yuklenirken hata olustu: ' + e.message + '</div></div>';
+            chatContainer.innerHTML = '<div class="message ai"><div class="message-bubble" style="background:#ff4444;color:white;"><b>Başlatma Hatası:</b><br>' + e.message + '</div></div>';
         }
     }
 }
 
 async function setupDatabase() {
     try {
-        await fetch(API_BASE + "phps/setup_db.php");
+        const response = await fetch(DB_SETUP_URL);
+        const text = await response.text();
+        console.log("DB setup response:", text.substring(0, 100));
     } catch (e) {
-        console.log("DB setup check:", e);
+        console.error("DB setup error:", e);
     }
 }
 
@@ -307,23 +327,40 @@ function setupEventListeners() {
 // API Helper - GET istekleri icin
 async function apiGet(action) {
     try {
-        const response = await fetch(`${API_URL}?action=${action}`, {
+        const url = `${API_URL}?action=${action}`;
+        console.log("GET:", url);
+        
+        const response = await fetch(url, {
             method: 'GET',
             headers: { 'Accept': 'application/json' }
         });
+        
+        console.log("GET Response status:", response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const text = await response.text();
+        console.log("GET Response:", text.substring(0, 100));
+        
         if (!text) return { success: false, error: 'Empty response' };
-        return JSON.parse(text);
+        
+        const json = JSON.parse(text);
+        return json;
     } catch (error) {
-        console.error("API GET Error:", error);
-        return { success: false, error: error.message };
+        console.error("API GET Error:", action, error);
+        return { success: false, error: `${error.name}: ${error.message}` };
     }
 }
 
 // API Helper - POST istekleri icin
 async function apiPost(action, data = {}) {
     try {
-        const response = await fetch(`${API_URL}?action=${action}`, {
+        const url = `${API_URL}?action=${action}`;
+        console.log("POST:", url, data);
+        
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
@@ -331,12 +368,23 @@ async function apiPost(action, data = {}) {
             },
             body: JSON.stringify(data)
         });
+        
+        console.log("POST Response status:", response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const text = await response.text();
+        console.log("POST Response:", text.substring(0, 100));
+        
         if (!text) return { success: false, error: 'Empty response' };
-        return JSON.parse(text);
+        
+        const json = JSON.parse(text);
+        return json;
     } catch (error) {
-        console.error("API POST Error:", error);
-        return { success: false, error: error.message };
+        console.error("API POST Error:", action, error);
+        return { success: false, error: `${error.name}: ${error.message}` };
     }
 }
 
