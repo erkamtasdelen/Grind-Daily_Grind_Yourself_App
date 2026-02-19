@@ -31,7 +31,7 @@ function debugLog(msg, type = 'info') {
 debugLog("AI.js loaded successfully");
 
 // API Configuration
-const API_KEY = "AIzaSyDu9BAvoI6gZPtLm65hJVD4Hho1by_K2YQ";
+const API_KEY = "AIzaSyCcN_GbgPwro4SepnYpBZenGKpJat-PLNQ";
 
 // Get base URL dynamically
 const getBaseURL = () => {
@@ -976,7 +976,7 @@ async function getAIResponse(userMessage) {
         }
         
         const model = genAI.getGenerativeModel({
-            model: "gemma-3-27b",
+            model: "gemini-2.5-flash-lite",
             systemInstruction: getSystemPrompt()
         });
 
