@@ -19,6 +19,7 @@ $pass = '7Xfr&sTvvGWEnl}E';
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->exec("SET NAMES utf8mb4");
 } catch (PDOException $e) {
     http_response_code(200);
     echo json_encode(['success' => false, 'error' => 'DB Error: ' . $e->getMessage()]);

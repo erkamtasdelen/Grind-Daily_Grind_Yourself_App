@@ -1,4 +1,6 @@
 <?php
+header('Content-Type: text/html; charset=utf-8');
+
 // MySQL Veritabani Kurulum Scripti
 // localhost - root:root
 
@@ -10,6 +12,7 @@ try {
     // MySQL baglantisi
     $pdo = new PDO("mysql:host=$host", $user, $pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->exec("SET NAMES utf8mb4");
     
     // Veritabani olustur
     $pdo->exec("CREATE DATABASE IF NOT EXISTS erkamtas_grind_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");

@@ -243,6 +243,7 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     padding: 1.5rem;
+    padding-bottom: 1rem;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
@@ -347,6 +348,7 @@ body {
     grid-template-columns: repeat(4, 1fr);
     gap: 0.75rem;
     padding: 1rem 1.5rem;
+    padding-bottom: 0.5rem;
     background: var(--bg-primary);
     border-top: 1px solid var(--border);
     flex-shrink: 0;
@@ -1023,6 +1025,7 @@ body {
         bottom: 0;
         z-index: 100;
         transform: translateX(-100%);
+        overflow-y: auto;
     }
 
     .sidebar.open {
@@ -1033,8 +1036,13 @@ body {
         display: flex;
     }
 
-    /* Hide desktop sidebar nav items text on mobile topbar */
-    .sidebar-nav {
+    /* Show sidebar nav items in mobile sidebar when opened */
+    .sidebar.open .sidebar-nav {
+        display: block;
+    }
+    
+    /* Hide sidebar nav from topbar */
+    .topbar .sidebar-nav {
         display: none;
     }
 
@@ -1045,16 +1053,13 @@ body {
 
     /* Adjust main content for bottom nav */
     .views-container {
-        padding-bottom: 70px;
+        padding-bottom: 0;
     }
 
     .quick-actions {
         grid-template-columns: repeat(2, 1fr);
-        padding-bottom: calc(0.75rem + 70px);
-    }
-
-    .input-area {
-        padding-bottom: calc(1rem + 70px);
+        padding-bottom: 0.5rem;
+        margin-bottom: 0;
     }
 
     .week-grid {
@@ -1105,11 +1110,11 @@ body {
 
     .chat-container {
         padding: 1rem;
+        padding-bottom: 0.5rem;
     }
 
     .quick-actions {
         padding: 0.75rem 1rem;
-        padding-bottom: calc(0.75rem + 70px);
         gap: 0.5rem;
     }
 
@@ -1121,7 +1126,8 @@ body {
 
     .input-area {
         padding: 0.75rem 1rem;
-        padding-bottom: calc(0.75rem + 70px);
+        padding-bottom: 0.75rem;
+        margin-bottom: 70px;
     }
 
     .input-wrapper {
@@ -1206,6 +1212,7 @@ body {
     /* Insight suggestion */
     .insight-suggestion {
         margin: 0 1rem;
+        margin-bottom: 0;
     }
 
     .insight-actions {
