@@ -2,7 +2,7 @@
   "name": "GRIND - No Pain No Gain",
   "short_name": "GRIND",
   "description": "Kişisel gelişim ve motivasyon koçu",
-  "start_url": "/",
+  "start_url": "/grind",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
