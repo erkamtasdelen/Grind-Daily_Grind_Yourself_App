@@ -202,24 +202,29 @@ async function loadUserInsights() {
 
 function setupEventListeners() {
     // Send message
-    sendBtn.addEventListener("click", handleSend);
-    userInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSend();
-        }
-    });
+    if (sendBtn) {
+        sendBtn.addEventListener("click", handleSend);
+    }
+    
+    if (userInput) {
+        userInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+            }
+        });
 
-    // Auto-resize textarea
-    userInput.addEventListener("input", () => {
-        userInput.style.height = "auto";
-        userInput.style.height = userInput.scrollHeight + "px";
-    });
+        // Auto-resize textarea
+        userInput.addEventListener("input", () => {
+            userInput.style.height = "auto";
+            userInput.style.height = userInput.scrollHeight + "px";
+        });
+    }
 
     // Quick actions
     quickBtns.forEach(btn => {
         btn.addEventListener("click", () => {
-            userInput.value = btn.dataset.prompt;
+            if (userInput) userInput.value = btn.dataset.prompt;
             handleSend();
         });
     });
@@ -242,21 +247,37 @@ function setupEventListeners() {
     });
 
     // Mobile menu
-    menuToggle.addEventListener("click", toggleSidebar);
+    if (menuToggle) {
+        menuToggle.addEventListener("click", toggleSidebar);
+    }
     
     // Sidebar overlay click to close
-    sidebarOverlay.addEventListener("click", closeSidebar);
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener("click", closeSidebar);
+    }
     
     // Swipe gesture for sidebar
     setupSwipeGestures();
 
     // Goals
-    addGoalBtn.addEventListener("click", () => goalModal.classList.add("active"));
-    closeModal.addEventListener("click", () => goalModal.classList.remove("active"));
-    goalModal.addEventListener("click", (e) => {
-        if (e.target === goalModal) goalModal.classList.remove("active");
-    });
-    goalForm.addEventListener("submit", handleAddGoal);
+    if (addGoalBtn) {
+        addGoalBtn.addEventListener("click", () => {
+            if (goalModal) goalModal.classList.add("active");
+        });
+    }
+    if (closeModal) {
+        closeModal.addEventListener("click", () => {
+            if (goalModal) goalModal.classList.remove("active");
+        });
+    }
+    if (goalModal) {
+        goalModal.addEventListener("click", (e) => {
+            if (e.target === goalModal) goalModal.classList.remove("active");
+        });
+    }
+    if (goalForm) {
+        goalForm.addEventListener("submit", handleAddGoal);
+    }
 
     // Week progress
     dayCells.forEach(cell => {
@@ -264,9 +285,15 @@ function setupEventListeners() {
     });
 
     // Insight actions
-    saveInsightBtn.addEventListener("click", handleSaveInsight);
-    dismissInsightBtn.addEventListener("click", hideInsightSuggestion);
-    closeInsightBtn.addEventListener("click", hideInsightSuggestion);
+    if (saveInsightBtn) {
+        saveInsightBtn.addEventListener("click", handleSaveInsight);
+    }
+    if (dismissInsightBtn) {
+        dismissInsightBtn.addEventListener("click", hideInsightSuggestion);
+    }
+    if (closeInsightBtn) {
+        closeInsightBtn.addEventListener("click", hideInsightSuggestion);
+    }
 }
 
 // API Helper - GET istekleri icin
@@ -327,7 +354,9 @@ function switchView(viewId) {
         goals: "Hedefler",
         insights: "Notlar"
     };
-    viewTitle.textContent = titles[viewId] || "Koc";
+    if (viewTitle) {
+        viewTitle.textContent = titles[viewId] || "Koc";
+    }
 
     // Reload data when switching views
     if (viewId === "insights") loadInsights();
@@ -335,14 +364,17 @@ function switchView(viewId) {
 }
 
 function toggleSidebar() {
+    if (!sidebar) return;
     const isOpen = sidebar.classList.toggle("open");
-    sidebarOverlay.classList.toggle("active", isOpen);
+    if (sidebarOverlay) {
+        sidebarOverlay.classList.toggle("active", isOpen);
+    }
     document.body.style.overflow = isOpen ? "hidden" : "";
 }
 
 function closeSidebar() {
-    sidebar.classList.remove("open");
-    sidebarOverlay.classList.remove("active");
+    if (sidebar) sidebar.classList.remove("open");
+    if (sidebarOverlay) sidebarOverlay.classList.remove("active");
     document.body.style.overflow = "";
 }
 
@@ -370,7 +402,7 @@ function setupSwipeGestures() {
                 toggleSidebar();
             }
             // Swipe left to close sidebar when open
-            if (diffX < 0 && sidebar.classList.contains("open")) {
+            if (diffX < 0 && sidebar?.classList.contains("open")) {
                 closeSidebar();
             }
         }
@@ -379,6 +411,7 @@ function setupSwipeGestures() {
 
 // Date
 function updateDate() {
+    if (!currentDateEl) return;
     const now = new Date();
     const options = { weekday: 'long', day: 'numeric', month: 'long' };
     currentDateEl.textContent = now.toLocaleDateString('tr-TR', options);
@@ -388,8 +421,8 @@ function updateDate() {
 async function loadStats() {
     const result = await apiGet("get_stats");
     if (result.success) {
-        streakCountEl.textContent = result.data.streak || 0;
-        totalSessionsEl.textContent = result.data.total_sessions || 0;
+        if (streakCountEl) streakCountEl.textContent = result.data.streak || 0;
+        if (totalSessionsEl) totalSessionsEl.textContent = result.data.total_sessions || 0;
     }
 }
 
@@ -435,6 +468,8 @@ async function loadGoals() {
 }
 
 function renderGoals(goals) {
+    if (!goalsList) return;
+    
     if (!goals || goals.length === 0) {
         goalsList.innerHTML = `
             <div class="empty-goals">
@@ -460,16 +495,22 @@ function renderGoals(goals) {
 
 async function handleAddGoal(e) {
     e.preventDefault();
-    const title = document.getElementById("goalTitle").value.trim();
-    const description = document.getElementById("goalDesc").value.trim();
-    const deadline = document.getElementById("goalDeadline").value;
+    const titleEl = document.getElementById("goalTitle");
+    const descEl = document.getElementById("goalDesc");
+    const deadlineEl = document.getElementById("goalDeadline");
+    
+    if (!titleEl || !descEl || !deadlineEl) return;
+    
+    const title = titleEl.value.trim();
+    const description = descEl.value.trim();
+    const deadline = deadlineEl.value;
 
     if (!title) return;
 
     await apiPost("save_goal", { title, description, deadline });
     loadGoals();
-    goalModal.classList.remove("active");
-    goalForm.reset();
+    if (goalModal) goalModal.classList.remove("active");
+    if (goalForm) goalForm.reset();
 }
 
 window.toggleGoal = async function(id) {
@@ -491,6 +532,8 @@ async function loadInsights() {
 }
 
 function renderInsights(insights) {
+    if (!insightsList) return;
+    
     if (!insights || insights.length === 0) {
         insightsList.innerHTML = `
             <div class="empty-insights">
@@ -517,6 +560,8 @@ function renderInsights(insights) {
 }
 
 function showInsightSuggestion(insight) {
+    if (!insightSuggestion || !insightContent) return;
+    
     pendingInsight = insight;
     insightContent.textContent = insight.content;
     insightSuggestion.classList.add("active");
@@ -526,12 +571,16 @@ function showInsightSuggestion(insight) {
 }
 
 function hideInsightSuggestion() {
-    insightSuggestion.classList.remove("active");
+    if (insightSuggestion) {
+        insightSuggestion.classList.remove("active");
+    }
     pendingInsight = null;
     removeSaveQuickAction();
 }
 
 function addSaveQuickAction() {
+    if (!quickActions) return;
+    
     // Varsa eski kaydet butonunu kaldir
     removeSaveQuickAction();
     
@@ -546,6 +595,7 @@ function addSaveQuickAction() {
 }
 
 function removeSaveQuickAction() {
+    if (!quickActions) return;
     const existing = quickActions.querySelector(".save-action");
     if (existing) existing.remove();
 }
@@ -581,6 +631,8 @@ function formatDate(dateStr) {
 
 // Chat
 async function handleSend() {
+    if (!userInput) return;
+    
     const message = userInput.value.trim();
     if (!message) return;
 
@@ -658,6 +710,10 @@ function parseInsight(response) {
 }
 
 function addMessage(text, sender, scrollToBottom = true) {
+    if (!chatContainer) {
+        console.error("chatContainer not found");
+        return;
+    }
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${sender}`;
     messageDiv.innerHTML = `<div class="message-bubble">${text}</div>`;
@@ -730,9 +786,13 @@ async function getAIResponse(userMessage) {
 }
 
 function showLoading(show) {
-    loadingOverlay.classList.toggle("active", show);
-    sendBtn.disabled = show;
+    if (loadingOverlay) loadingOverlay.classList.toggle("active", show);
+    if (sendBtn) sendBtn.disabled = show;
 }
 
-// Start
-init();
+// Start - wrap in DOMContentLoaded to ensure DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
