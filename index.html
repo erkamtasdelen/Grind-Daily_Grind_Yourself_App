@@ -264,6 +264,22 @@
         }
     }
     </script>
+    <script>
+        // Global error handler for debugging
+        window.onerror = function(msg, url, line, col, error) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ff4444;color:white;padding:10px;z-index:9999;font-size:12px;word-break:break-all;';
+            errorDiv.innerHTML = '<b>Hata:</b> ' + msg + '<br><small>' + url + ':' + line + '</small>';
+            document.body.appendChild(errorDiv);
+            return false;
+        };
+        window.addEventListener('unhandledrejection', function(e) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#ff6600;color:white;padding:10px;z-index:9999;font-size:12px;word-break:break-all;';
+            errorDiv.innerHTML = '<b>Promise Hatasi:</b> ' + (e.reason?.message || e.reason || 'Bilinmeyen');
+            document.body.appendChild(errorDiv);
+        });
+    </script>
     <script type="module" src="scripts/ai.js"></script>
 </body>
 </html>

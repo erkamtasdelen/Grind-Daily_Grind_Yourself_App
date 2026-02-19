@@ -1,10 +1,29 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// Debug log for mobile
+console.log("AI.js loaded successfully");
+
 // API Configuration
 const API_KEY = "AIzaSyAa6TNiz1E-5rsQr7bSdnju3vR86fWmoe0";
-const API_BASE = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+const API_BASE = (function() {
+    try {
+        const loc = globalThis.location || window.location;
+        return loc.origin + loc.pathname.replace(/[^\/]*$/, '');
+    } catch(e) {
+        return './';
+    }
+})();
 const API_URL = API_BASE + "phps/api.php";
-const genAI = new GoogleGenerativeAI(API_KEY);
+
+console.log("API_URL:", API_URL);
+
+let genAI;
+try {
+    genAI = new GoogleGenerativeAI(API_KEY);
+    console.log("Gemini AI initialized");
+} catch(e) {
+    console.error("Gemini init error:", e);
+}
 
 // DOM Elements
 const chatContainer = document.getElementById("chatContainer");
@@ -108,15 +127,30 @@ function getSystemPrompt() {
 
 // Initialize
 async function init() {
-    setupEventListeners();
-    updateDate();
-    await setupDatabase();
-    await loadChatHistory();
-    await loadUserInsights();
-    loadStats();
-    loadGoals();
-    loadInsights();
-    renderWeekProgress();
+    console.log("Init starting...");
+    try {
+        setupEventListeners();
+        console.log("Event listeners ok");
+        updateDate();
+        console.log("Date ok");
+        await setupDatabase();
+        console.log("DB setup ok");
+        await loadChatHistory();
+        console.log("Chat history ok");
+        await loadUserInsights();
+        console.log("User insights ok");
+        loadStats();
+        loadGoals();
+        loadInsights();
+        renderWeekProgress();
+        console.log("Init complete!");
+    } catch (e) {
+        console.error("Init error:", e);
+        // Show error to user
+        if (chatContainer) {
+            chatContainer.innerHTML = '<div class="message ai"><div class="message-bubble">Uygulama yuklenirken hata olustu: ' + e.message + '</div></div>';
+        }
+    }
 }
 
 async function setupDatabase() {
@@ -647,6 +681,10 @@ async function saveChatMessage(role, message) {
 
 async function getAIResponse(userMessage) {
     try {
+        if (!genAI) {
+            throw new Error("AI servisi yuklenemedi. Sayfayi yenile.");
+        }
+        
         const model = genAI.getGenerativeModel({
             model: "gemini-2.5-flash",
             systemInstruction: getSystemPrompt()
