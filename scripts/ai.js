@@ -976,7 +976,7 @@ async function getAIResponse(userMessage) {
         }
         
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash-exp",
+            model: "gemma-3-27b",
             systemInstruction: getSystemPrompt()
         });
 
