@@ -50,6 +50,7 @@ body {
 
 .sidebar-header {
     padding: 1.5rem;
+    padding-top: calc(1.5rem + env(safe-area-inset-top));
     border-bottom: 1px solid var(--border);
 }
 
@@ -149,6 +150,7 @@ body {
     align-items: center;
     gap: 1rem;
     padding: 1rem 1.5rem;
+    padding-top: calc(1rem + env(safe-area-inset-top));
     background: var(--bg-primary);
     border-bottom: 1px solid var(--border);
 }
@@ -1098,6 +1100,7 @@ body {
 @media (max-width: 480px) {
     .topbar {
         padding: 0.75rem 1rem;
+        padding-top: calc(0.75rem + env(safe-area-inset-top));
     }
 
     .topbar-title h2 {
@@ -1126,7 +1129,8 @@ body {
 
     .input-area {
         padding: 0.75rem 1rem;
-        padding-bottom: 0.75rem;
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+        margin-bottom: calc(70px + env(safe-area-inset-bottom));
     }
 
     .input-wrapper {
@@ -1287,9 +1291,17 @@ body {
     transform: scale(1.1);
 }
 
-/* Safe area support */
+/* Safe area support for older iOS versions */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
-    .input-area {
-        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    .mobile-nav {
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    }
+    
+    .topbar {
+        padding-top: calc(1rem + env(safe-area-inset-top));
+    }
+    
+    .sidebar-header {
+        padding-top: calc(1.5rem + env(safe-area-inset-top));
     }
 }
