@@ -12,9 +12,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // MySQL Baglantisi
 $host = 'localhost';
-$dbname = 'grind_db';
-$user = 'root';
-$pass = '';
+$dbname = 'erkamtas_grind_db';
+$user = 'erkamtas_root';
+$pass = '7Xfr&sTvvGWEnl}E';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $user, $pass);

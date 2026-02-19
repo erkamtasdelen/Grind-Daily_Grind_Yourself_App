@@ -3,8 +3,8 @@
 // localhost - root:root
 
 $host = 'localhost';
-$user = 'root';
-$pass = '';
+$user = 'erkamtas_root';
+$pass = '7Xfr&sTvvGWEnl}E';
 
 try {
     // MySQL baglantisi
@@ -12,8 +12,8 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
     // Veritabani olustur
-    $pdo->exec("CREATE DATABASE IF NOT EXISTS grind_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    $pdo->exec("USE grind_db");
+    $pdo->exec("CREATE DATABASE IF NOT EXISTS erkamtas_grind_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $pdo->exec("USE erkamtas_grind_db");
     
     // Kullanici bilgileri tablosu
     $pdo->exec("CREATE TABLE IF NOT EXISTS insights (
