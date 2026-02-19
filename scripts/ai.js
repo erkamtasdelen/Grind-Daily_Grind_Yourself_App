@@ -1,25 +1,109 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Debug log for mobile
-console.log("AI.js loaded successfully");
+// Debug panel for mobile
+let debugPanel = null;
+function debugLog(msg, type = 'info') {
+    console.log(msg);
+    
+    // Create debug panel if it doesn't exist
+    if (!debugPanel) {
+        debugPanel = document.createElement('div');
+        debugPanel.id = 'debug-panel';
+        debugPanel.style.cssText = 'position:fixed;bottom:80px;left:10px;right:10px;max-height:200px;overflow-y:auto;background:rgba(0,0,0,0.9);color:#0f0;padding:10px;font-size:10px;font-family:monospace;z-index:10000;border:1px solid #0f0;display:none;';
+        document.body.appendChild(debugPanel);
+        
+        // Toggle button
+        const toggleBtn = document.createElement('button');
+        toggleBtn.textContent = '🐛';
+        toggleBtn.style.cssText = 'position:fixed;bottom:20px;right:20px;width:50px;height:50px;border-radius:50%;background:#0f0;color:#000;border:none;font-size:20px;z-index:10001;';
+        toggleBtn.onclick = () => {
+            debugPanel.style.display = debugPanel.style.display === 'none' ? 'block' : 'none';
+        };
+        document.body.appendChild(toggleBtn);
+    }
+    
+    const time = new Date().toLocaleTimeString();
+    const color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : '#fff';
+    debugPanel.innerHTML += `<div style="color:${color};margin:2px 0;">[${time}] ${msg}</div>`;
+    debugPanel.scrollTop = debugPanel.scrollHeight;
+}
+
+debugLog("AI.js loaded successfully");
 
 // API Configuration
-const API_KEY = "AIzaSyAa6TNiz1E-5rsQr7bSdnju3vR86fWmoe0";
+const API_KEY = "AIzaSyDu9BAvoI6gZPtLm65hJVD4Hho1by_K2YQ";
 
-// Use simple relative path for better mobile compatibility
-const API_URL = "phps/api.php";
-const DB_SETUP_URL = "phps/setup_db.php";
+// Get base URL dynamically
+const getBaseURL = () => {
+    const loc = globalThis.location;
+    const base = `${loc.protocol}//${loc.host}${loc.pathname.replace(/[^\/]*$/, '')}`;
+    debugLog(`Base URL: ${base}`);
+    return base;
+};
 
-console.log("Current location:", globalThis.location?.href);
-console.log("API_URL:", API_URL);
+const API_URL = getBaseURL() + "phps/api.php";
+const DB_SETUP_URL = getBaseURL() + "phps/setup_db.php";
+
+debugLog(`API_URL: ${API_URL}`);
+debugLog(`DB_SETUP_URL: ${DB_SETUP_URL}`);
+debugLog(`Protocol: ${globalThis.location?.protocol}`);
+debugLog(`Host: ${globalThis.location?.host}`);
+debugLog(`User Agent: ${navigator.userAgent.substring(0, 50)}...`);
 
 let genAI;
 try {
     genAI = new GoogleGenerativeAI(API_KEY);
-    console.log("Gemini AI initialized");
+    debugLog("✓ Gemini AI initialized", 'success');
 } catch(e) {
+    debugLog(`✗ Gemini init error: ${e.message}`, 'error');
     console.error("Gemini init error:", e);
 }
+
+// Request quota tracker (simple localStorage based)
+const QuotaTracker = {
+    key: 'grind_api_quota',
+    limit: 20,
+    
+    getToday() {
+        return new Date().toDateString();
+    },
+    
+    load() {
+        try {
+            const data = JSON.parse(localStorage.getItem(this.key) || '{}');
+            if (data.date !== this.getToday()) {
+                // New day, reset counter
+                return { date: this.getToday(), count: 0 };
+            }
+            return data;
+        } catch {
+            return { date: this.getToday(), count: 0 };
+        }
+    },
+    
+    save(data) {
+        try {
+            localStorage.setItem(this.key, JSON.stringify(data));
+        } catch {}
+    },
+    
+    increment() {
+        const data = this.load();
+        data.count++;
+        this.save(data);
+        debugLog(`📊 API Usage: ${data.count}/${this.limit}`);
+        return data.count;
+    },
+    
+    getRemaining() {
+        const data = this.load();
+        return Math.max(0, this.limit - data.count);
+    },
+    
+    canRequest() {
+        return this.getRemaining() > 0;
+    }
+};
 
 // DOM Elements
 const chatContainer = document.getElementById("chatContainer");
@@ -121,62 +205,107 @@ function getSystemPrompt() {
     return prompt;
 }
 
+// Update quota display
+function updateQuotaDisplay() {
+    const remaining = QuotaTracker.getRemaining();
+    const total = QuotaTracker.limit;
+    
+    // Update or create quota badge in topbar
+    let quotaBadge = document.getElementById('quota-badge');
+    if (!quotaBadge) {
+        quotaBadge = document.createElement('div');
+        quotaBadge.id = 'quota-badge';
+        quotaBadge.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.8);color:white;padding:4px 10px;border-radius:12px;font-size:11px;z-index:1000;border:1px solid #444;';
+        document.body.appendChild(quotaBadge);
+    }
+    
+    const percentage = (remaining / total) * 100;
+    let color = '#4a9eff'; // blue
+    if (percentage <= 25) color = '#ff4444'; // red
+    else if (percentage <= 50) color = '#ffaa00'; // orange
+    
+    quotaBadge.style.borderColor = color;
+    quotaBadge.innerHTML = `<span style="color:${color};">●</span> AI: ${remaining}/${total}`;
+    
+    debugLog(`Quota Display: ${remaining}/${total} remaining`);
+}
+
 // Initialize
 async function init() {
-    console.log("Init starting...");
+    debugLog("=== INIT START ===");
     try {
         setupEventListeners();
-        console.log("Event listeners ok");
+        debugLog("✓ Event listeners", 'success');
+        
         updateDate();
-        console.log("Date ok");
+        debugLog("✓ Date updated", 'success');
+        
+        // Show quota display
+        updateQuotaDisplay();
         
         // Test API connection first
-        console.log("Testing API connection...");
+        debugLog("Testing API connection...");
         const testResult = await apiGet("get_stats");
-        console.log("API test result:", testResult);
         
-        if (!testResult.success && testResult.error) {
+        if (!testResult.success) {
+            debugLog(`✗ API test failed: ${testResult.error}`, 'error');
             // Show connection error to user
             if (chatContainer) {
                 chatContainer.innerHTML = `
                     <div class="message ai">
-                        <div class="message-bubble" style="background:#ff4444;color:white;">
-                            <b>Bağlantı Hatası:</b><br>
-                            ${testResult.error}<br><br>
-                            <small>API URL: ${API_URL}</small><br>
-                            <small>Location: ${globalThis.location?.href || 'unknown'}</small>
+                        <div class="message-bubble" style="background:#ff4444;color:white;max-width:95%;">
+                            <b>🔴 Bağlantı Hatası</b><br><br>
+                            <b>Hata:</b> ${testResult.error}<br><br>
+                            <b>API URL:</b><br>
+                            <small>${API_URL}</small><br><br>
+                            <b>Tarayıcı:</b><br>
+                            <small>${navigator.userAgent.substring(0, 60)}...</small><br><br>
+                            <small>Sağ alttaki 🐛 butonuna basarak detaylı log'ları görebilirsin.</small>
                         </div>
                     </div>
                 `;
             }
+            return; // Stop init if API test fails
+        } else {
+            debugLog("✓ API connection OK", 'success');
         }
         
         await setupDatabase();
-        console.log("DB setup ok");
+        debugLog("✓ DB setup", 'success');
+        
         await loadChatHistory();
-        console.log("Chat history ok");
+        debugLog("✓ Chat history loaded", 'success');
+        
         await loadUserInsights();
-        console.log("User insights ok");
+        debugLog("✓ User insights loaded", 'success');
+        
         loadStats();
         loadGoals();
         loadInsights();
         renderWeekProgress();
-        console.log("Init complete!");
+        
+        debugLog("=== INIT COMPLETE ===", 'success');
     } catch (e) {
+        debugLog(`✗ INIT ERROR: ${e.message}`, 'error');
         console.error("Init error:", e);
         // Show error to user
         if (chatContainer) {
-            chatContainer.innerHTML = '<div class="message ai"><div class="message-bubble" style="background:#ff4444;color:white;"><b>Başlatma Hatası:</b><br>' + e.message + '</div></div>';
+            chatContainer.innerHTML = '<div class="message ai"><div class="message-bubble" style="background:#ff4444;color:white;max-width:95%;"><b>Başlatma Hatası:</b><br>' + e.message + '<br><br><small>🐛 Debug butonuna bas</small></div></div>';
         }
     }
 }
 
 async function setupDatabase() {
     try {
-        const response = await fetch(DB_SETUP_URL);
+        debugLog(`→ Setting up database: ${DB_SETUP_URL}`);
+        const response = await fetch(DB_SETUP_URL, {
+            mode: 'cors',
+            cache: 'no-cache'
+        });
         const text = await response.text();
-        console.log("DB setup response:", text.substring(0, 100));
+        debugLog(`✓ DB setup response: ${text.substring(0, 50)}...`, 'success');
     } catch (e) {
+        debugLog(`✗ DB setup error: ${e.message}`, 'error');
         console.error("DB setup error:", e);
     }
 }
@@ -328,27 +457,30 @@ function setupEventListeners() {
 async function apiGet(action) {
     try {
         const url = `${API_URL}?action=${action}`;
-        console.log("GET:", url);
+        debugLog(`→ GET: ${url}`);
         
         const response = await fetch(url, {
             method: 'GET',
-            headers: { 'Accept': 'application/json' }
+            headers: { 'Accept': 'application/json' },
+            mode: 'cors',
+            cache: 'no-cache'
         });
         
-        console.log("GET Response status:", response.status);
+        debugLog(`← GET ${response.status}: ${action}`, response.ok ? 'success' : 'error');
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const text = await response.text();
-        console.log("GET Response:", text.substring(0, 100));
+        debugLog(`Response length: ${text.length} chars`);
         
         if (!text) return { success: false, error: 'Empty response' };
         
         const json = JSON.parse(text);
         return json;
     } catch (error) {
+        debugLog(`✗ GET Error (${action}): ${error.message}`, 'error');
         console.error("API GET Error:", action, error);
         return { success: false, error: `${error.name}: ${error.message}` };
     }
@@ -358,7 +490,7 @@ async function apiGet(action) {
 async function apiPost(action, data = {}) {
     try {
         const url = `${API_URL}?action=${action}`;
-        console.log("POST:", url, data);
+        debugLog(`→ POST: ${url}`);
         
         const response = await fetch(url, {
             method: 'POST',
@@ -366,23 +498,26 @@ async function apiPost(action, data = {}) {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
+            mode: 'cors',
+            cache: 'no-cache',
             body: JSON.stringify(data)
         });
         
-        console.log("POST Response status:", response.status);
+        debugLog(`← POST ${response.status}: ${action}`, response.ok ? 'success' : 'error');
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
         const text = await response.text();
-        console.log("POST Response:", text.substring(0, 100));
+        debugLog(`Response length: ${text.length} chars`);
         
         if (!text) return { success: false, error: 'Empty response' };
         
         const json = JSON.parse(text);
         return json;
     } catch (error) {
+        debugLog(`✗ POST Error (${action}): ${error.message}`, 'error');
         console.error("API POST Error:", action, error);
         return { success: false, error: `${error.name}: ${error.message}` };
     }
@@ -692,6 +827,22 @@ async function handleSend() {
     const message = userInput.value.trim();
     if (!message) return;
 
+    // Check quota before sending
+    const remaining = QuotaTracker.getRemaining();
+    if (remaining <= 0) {
+        addMessage(
+            `⚠️ <b>Günlük AI Kullanım Limiti Doldu</b><br><br>` +
+            `Bugün için 20 mesaj limitine ulaştın.<br><br>` +
+            `<b>Yarın tekrar gel!</b> Limit her gün sıfırlanır.`,
+            "ai"
+        );
+        return;
+    }
+    
+    if (remaining <= 3) {
+        debugLog(`⚠️ Warning: Only ${remaining} requests remaining today!`, 'error');
+    }
+
     // Remove welcome card
     const welcomeCard = document.querySelector(".welcome-card");
     if (welcomeCard) welcomeCard.remove();
@@ -712,6 +863,14 @@ async function handleSend() {
     try {
         const response = await getAIResponse(message);
         
+        // Increment quota counter after successful response
+        const count = QuotaTracker.increment();
+        const left = QuotaTracker.getRemaining();
+        
+        if (left <= 3 && left > 0) {
+            debugLog(`⚠️ ${left} requests remaining today`, 'error');
+        }
+        
         // Parse insight from response
         const { cleanResponse, insight } = parseInsight(response);
         
@@ -725,15 +884,34 @@ async function handleSend() {
         incrementSession();
     } catch (error) {
         console.error("Send Error:", error);
+        debugLog(`✗ Send Error: ${error.message}`, 'error');
+        
         const errorMsg = error.message || "Bilinmeyen hata";
-        if (errorMsg.includes("API_KEY") || errorMsg.includes("key")) {
-            addMessage("API anahtari hatasi. Lutfen daha sonra tekrar dene.", "ai");
+        
+        // Check for quota/rate limit errors (429)
+        if (errorMsg.includes("quota") || errorMsg.includes("429") || errorMsg.includes("Too Many Requests")) {
+            // Try to extract retry delay
+            const retryMatch = errorMsg.match(/retry in (\d+\.?\d*)s/i) || errorMsg.match(/(\d+)s/);
+            const retrySeconds = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 60;
+            const retryMinutes = Math.ceil(retrySeconds / 60);
+            
+            addMessage(
+                `⚠️ <b>Günlük AI Kullanım Limiti Doldu</b><br><br>` +
+                `Google Gemini API'nin ücretsiz planı günde <b>20 istek</b> ile sınırlı.<br><br>` +
+                `<b>Çözümler:</b><br>` +
+                `• ${retryMinutes} dakika bekle ve tekrar dene<br>` +
+                `• Yarın tekrar gel (limit her gün sıfırlanır)<br>` +
+                `• API anahtarını yükselt: <a href="https://ai.google.dev/pricing" target="_blank" style="color:#4a9eff;">ai.google.dev/pricing</a>`,
+                "ai"
+            );
+        } else if (errorMsg.includes("API_KEY") || errorMsg.includes("key")) {
+            addMessage("🔑 API anahtarı hatası. Lütfen daha sonra tekrar dene.", "ai");
         } else if (errorMsg.includes("network") || errorMsg.includes("fetch") || errorMsg.includes("Failed")) {
-            addMessage("Baglanti hatasi. Internet baglantini kontrol et.", "ai");
-        } else if (errorMsg.includes("quota") || errorMsg.includes("limit")) {
-            addMessage("API limiti asildi. Biraz bekleyip tekrar dene.", "ai");
+            addMessage("📡 Bağlantı hatası. Internet bağlantını kontrol et.", "ai");
+        } else if (errorMsg.includes("First content should be with role 'user'")) {
+            addMessage("⚠️ Geçmiş mesajlarda sorun var. Sayfayı yenile ve tekrar dene.", "ai");
         } else {
-            addMessage(`Bir hata olustu: ${errorMsg}`, "ai");
+            addMessage(`❌ Bir hata oluştu:<br><small>${errorMsg.substring(0, 200)}</small>`, "ai");
         }
     } finally {
         showLoading(false);
@@ -798,7 +976,7 @@ async function getAIResponse(userMessage) {
         }
         
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
+            model: "gemini-2.0-flash-exp",
             systemInstruction: getSystemPrompt()
         });
 
