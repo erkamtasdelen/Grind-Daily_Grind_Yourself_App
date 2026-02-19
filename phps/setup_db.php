@@ -4,7 +4,7 @@
 
 $host = 'localhost';
 $user = 'root';
-$pass = 'root';
+$pass = '';
 
 try {
     // MySQL baglantisi
