@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>GRIND - No Pain No Gain</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1 class="brand">GRIND</h1>
+                <span class="brand-sub">NO PAIN NO GAIN</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="chat">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>Koc</span>
+                </button>
+                <button class="nav-item" data-view="progress">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 20V10M12 20V4M6 20v-6"/>
+                    </svg>
+                    <span>Ilerleme</span>
+                </button>
+                <button class="nav-item" data-view="goals">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <circle cx="12" cy="12" r="6"/>
+                        <circle cx="12" cy="12" r="2"/>
+                    </svg>
+                    <span>Hedefler</span>
+                </button>
+                <button class="nav-item" data-view="insights">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                        <path d="M2 17l10 5 10-5"/>
+                        <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                    <span>Notlar</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-stats">
+                <div class="stat-card">
+                    <span class="stat-value" id="streakCount">0</span>
+                    <span class="stat-label">Gun Serisi</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="totalSessions">0</span>
+                    <span class="stat-label">Toplam Seans</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <button class="menu-toggle" id="menuToggle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                <div class="topbar-title">
+                    <h2 id="viewTitle">Koc</h2>
+                    <span class="topbar-date" id="currentDate"></span>
+                </div>
+                <div class="topbar-actions">
+                    <div class="daily-progress">
+                        <span class="progress-label">Bugunun %1'i</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="dailyProgress"></div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Views Container -->
+            <div class="views-container">
+                <!-- Chat View -->
+                <section class="view active" id="chatView">
+                    <!-- Chat Container -->
+                    <div class="chat-container" id="chatContainer">
+                        <!-- Messages will appear here -->
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions" id="quickActions">
+
+                    </div>
+
+                    <!-- AI Insight Suggestion Box -->
+                    <div class="insight-suggestion" id="insightSuggestion">
+                        <div class="insight-header">
+                            <span class="insight-label">Onemli Bilgi Tespit Edildi</span>
+                            <button class="insight-close" id="closeInsight">x</button>
+                        </div>
+                        <div class="insight-content" id="insightContent"></div>
+                        <div class="insight-actions">
+                            <button class="insight-save" id="saveInsight">Kaydet</button>
+                            <button class="insight-dismiss" id="dismissInsight">Atla</button>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="input-area">
+                        <div class="input-wrapper">
+                            <textarea 
+                                id="userInput" 
+                                placeholder="Mesajini yaz..." 
+                                rows="1"
+                                maxlength="500"></textarea>
+                            <button id="sendBtn" class="send-btn" aria-label="Gonder">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"/>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Progress View -->
+                <section class="view" id="progressView">
+                    <div class="progress-content">
+                        <div class="progress-header-section">
+                            <h3>Haftalik Ilerleme</h3>
+                        </div>
+                        <div class="week-grid">
+                            <div class="day-cell" data-day="0"><span>Pzt</span><div class="day-check"></div></div>
+                            <div class="day-cell" data-day="1"><span>Sal</span><div class="day-check"></div></div>
+                            <div class="day-cell" data-day="2"><span>Car</span><div class="day-check"></div></div>
+                            <div class="day-cell" data-day="3"><span>Per</span><div class="day-check"></div></div>
+                            <div class="day-cell" data-day="4"><span>Cum</span><div class="day-check"></div></div>
+                            <div class="day-cell" data-day="5"><span>Cmt</span><div class="day-check"></div></div>
+                            <div class="day-cell" data-day="6"><span>Paz</span><div class="day-check"></div></div>
+                        </div>
+
+                        <div class="compound-calc">
+                            <h3>Bilesik Gelisim Hesaplayici</h3>
+                            <p class="calc-desc">Her gun %1 gelisim = Yilda %3778 buyume</p>
+                            <div class="calc-result">
+                                <div class="calc-item">
+                                    <span class="calc-days">30 Gun</span>
+                                    <span class="calc-multi">1.35x</span>
+                                </div>
+                                <div class="calc-item">
+                                    <span class="calc-days">90 Gun</span>
+                                    <span class="calc-multi">2.45x</span>
+                                </div>
+                                <div class="calc-item">
+                                    <span class="calc-days">365 Gun</span>
+                                    <span class="calc-multi">37.78x</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Insights View -->
+                <section class="view" id="insightsView">
+                    <div class="insights-content">
+                        <div class="insights-header">
+                            <h3>Kaydedilen Notlar</h3>
+                        </div>
+                        <div class="insights-list" id="insightsList">
+                            <div class="empty-insights">
+                                <p>Henuz not kaydedilmedi</p>
+                                <span>AI senin icin onemli bilgileri tespit edecek</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Goals View -->
+                <section class="view" id="goalsView">
+                    <div class="goals-content">
+                        <div class="goals-header">
+                            <h3>Hedeflerim</h3>
+                            <button class="add-goal-btn" id="addGoalBtn">+ Hedef Ekle</button>
+                        </div>
+                        <div class="goals-list" id="goalsList">
+                            <div class="empty-goals">
+                                <p>Henuz hedef eklenmedi</p>
+                                <span>Ilk hedefini ekleyerek basla</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="mobile-nav" id="mobileNav">
+            <button class="mobile-nav-item active" data-view="chat">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>Koc</span>
+            </button>
+            <button class="mobile-nav-item" data-view="progress">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 20V10M12 20V4M6 20v-6"/>
+                </svg>
+                <span>Ilerleme</span>
+            </button>
+            <button class="mobile-nav-item" data-view="goals">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="6"/>
+                    <circle cx="12" cy="12" r="2"/>
+                </svg>
+                <span>Hedefler</span>
+            </button>
+            <button class="mobile-nav-item" data-view="insights">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+                <span>Notlar</span>
+            </button>
+        </nav>
+
+        <!-- Goal Modal -->
+        <div class="modal" id="goalModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Yeni Hedef</h3>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <form id="goalForm">
+                    <input type="text" id="goalTitle" placeholder="Hedef basligi" required>
+                    <textarea id="goalDesc" placeholder="Aciklama (opsiyonel)"></textarea>
+                    <input type="date" id="goalDeadline">
+                    <button type="submit" class="submit-btn">Hedef Ekle</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Dusunuyorum...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+    }
+    </script>
+    <script type="module" src="scripts/ai.js"></script>
+</body>
+</html>
