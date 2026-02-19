@@ -2,7 +2,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // API Configuration
 const API_KEY = "AIzaSyAa6TNiz1E-5rsQr7bSdnju3vR86fWmoe0";
-const API_URL = "phps/api.php";
+const API_BASE = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+const API_URL = API_BASE + "phps/api.php";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 // DOM Elements
@@ -120,7 +121,7 @@ async function init() {
 
 async function setupDatabase() {
     try {
-        await fetch("phps/setup_db.php");
+        await fetch(API_BASE + "phps/setup_db.php");
     } catch (e) {
         console.log("DB setup check:", e);
     }
@@ -581,8 +582,17 @@ async function handleSend() {
         
         incrementSession();
     } catch (error) {
-        console.error("Error:", error);
-        addMessage("Bir hata olustu. Tekrar dene.", "ai");
+        console.error("Send Error:", error);
+        const errorMsg = error.message || "Bilinmeyen hata";
+        if (errorMsg.includes("API_KEY") || errorMsg.includes("key")) {
+            addMessage("API anahtari hatasi. Lutfen daha sonra tekrar dene.", "ai");
+        } else if (errorMsg.includes("network") || errorMsg.includes("fetch") || errorMsg.includes("Failed")) {
+            addMessage("Baglanti hatasi. Internet baglantini kontrol et.", "ai");
+        } else if (errorMsg.includes("quota") || errorMsg.includes("limit")) {
+            addMessage("API limiti asildi. Biraz bekleyip tekrar dene.", "ai");
+        } else {
+            addMessage(`Bir hata olustu: ${errorMsg}`, "ai");
+        }
     } finally {
         showLoading(false);
     }
@@ -636,42 +646,49 @@ async function saveChatMessage(role, message) {
 }
 
 async function getAIResponse(userMessage) {
-    const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        systemInstruction: getSystemPrompt()
-    });
+    try {
+        const model = genAI.getGenerativeModel({
+            model: "gemini-2.5-flash",
+            systemInstruction: getSystemPrompt()
+        });
 
-    const history = chatHistory.map(msg => ({
-        role: msg.role,
-        parts: [{ text: msg.content }]
-    }));
+        const history = chatHistory.map(msg => ({
+            role: msg.role,
+            parts: [{ text: msg.content }]
+        }));
 
-    const chat = model.startChat({
-        history: history,
-        generationConfig: {
-            maxOutputTokens: 600,
-            temperature: 0.8,
+        const chat = model.startChat({
+            history: history,
+            generationConfig: {
+                maxOutputTokens: 600,
+                temperature: 0.8,
+            }
+        });
+
+        const result = await chat.sendMessage(userMessage);
+        const response = result.response;
+        const responseText = response.text();
+
+        // Update local history
+        chatHistory.push(
+            { role: "user", content: userMessage },
+            { role: "model", content: responseText }
+        );
+
+        // Save to database (don't await so it doesn't block)
+        saveChatMessage("user", userMessage);
+        saveChatMessage("ai", responseText);
+
+        // Keep only last 10 messages in memory
+        if (chatHistory.length > 10) {
+            chatHistory = chatHistory.slice(-10);
         }
-    });
 
-    const result = await chat.sendMessage(userMessage);
-    const response = await result.response;
-    const responseText = response.text();
-
-    // Update local history
-    chatHistory.push({ role: "user", content: userMessage });
-    chatHistory.push({ role: "model", content: responseText });
-
-    // Save to database
-    await saveChatMessage("user", userMessage);
-    await saveChatMessage("ai", responseText);
-
-    // Keep only last 10 messages in memory
-    if (chatHistory.length > 10) {
-        chatHistory = chatHistory.slice(-10);
+        return responseText;
+    } catch (error) {
+        console.error("AI Response Error:", error);
+        throw new Error(error.message || "Baglanti hatasi");
     }
-
-    return responseText;
 }
 
 function showLoading(show) {
